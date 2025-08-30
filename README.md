@@ -59,6 +59,256 @@ For further reading, see [this page](https://langchain-ai.github.io/langgraphjs/
 Once you've refined your graph locally, you can easily deploy it from a Git repo to LangGraph Cloud, our scalable deployment service for agents.
 See the [documentation here](https://langchain-ai.github.io/langgraph/cloud/deployment/setup_javascript/) for information on how to sign up.
 
+## Testing
+
+You can test the local LangGraph dev server here, or the the server deployed in LangGraph after with the following CURLs.
+
+```
+curl -X POST http://localhost:54367/runs/stream \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer YOUR_AUTH0_JWT_TOKEN" \
+  -d '{
+    "assistant_id": "agent",
+    "input": {
+      "messages": [
+        {
+          "role": "human",
+          "content": "Hello, can you list events on my calendar this week?"
+        }
+      ]
+    },
+    "config": {
+      "configurable": {
+        "thread_id": "test-thread-1"
+      }
+    },
+    "stream_mode": "values",
+    "config": {
+      "configurable": {
+        "_credentials": {
+          "accessToken": "YOUR_AUTH0_JWT_TOKEN"
+        }
+      }
+    }
+  }'
+```
+
+Sample response:
+
+```
+event: metadata
+data: {
+data:   "run_id": "15a4bb9e-867b-4214-b836-00effa25f05d",
+data:   "attempt": 1
+data: }
+
+event: values
+data: {
+data:   "messages": [
+data:     {
+data:       "content": "You are authenticated as google-oauth2|102728881944301552222 via Auth0. The user has the following scopes: openid profile email.",
+data:       "additional_kwargs": {},
+data:       "response_metadata": {},
+data:       "type": "system"
+data:     },
+data:     {
+data:       "content": "Hello, can you list my events this month?",
+data:       "additional_kwargs": {},
+data:       "response_metadata": {},
+data:       "id": "1338529e-4d85-4b31-9475-2757ab75120e",
+data:       "type": "human"
+data:     }
+data:   ]
+data: }
+
+event: values
+data: {
+data:   "messages": [
+data:     {
+data:       "content": "You are authenticated as google-oauth2|102728881944301552222 via Auth0. The user has the following scopes: openid profile email.",
+data:       "additional_kwargs": {},
+data:       "response_metadata": {},
+data:       "id": "d8695aba-66b1-495a-99f2-308e92606682",
+data:       "type": "system"
+data:     },
+data:     {
+data:       "content": "Hello, can you list my events this month?",
+data:       "additional_kwargs": {},
+data:       "response_metadata": {},
+data:       "id": "1338529e-4d85-4b31-9475-2757ab75120e",
+data:       "type": "human"
+data:     },
+data:     {
+data:       "content": "",
+data:       "additional_kwargs": {
+data:         "tool_calls": [
+data:           {
+data:             "index": 0,
+data:             "id": "call_3h1ZMZa9ZxB4qASRemMlmy4c",
+data:             "type": "function",
+data:             "function": {
+data:               "name": "google_calendar_view",
+data:               "arguments": "{\"input\":\"list all events for this month\"}"
+data:             }
+data:           }
+data:         ]
+data:       },
+data:       "response_metadata": {
+data:         "usage": {
+data:           "prompt_tokens": 216,
+data:           "completion_tokens": 20,
+data:           "total_tokens": 236,
+data:           "prompt_tokens_details": {
+data:             "cached_tokens": 0,
+data:             "audio_tokens": 0
+data:           },
+data:           "completion_tokens_details": {
+data:             "reasoning_tokens": 0,
+data:             "audio_tokens": 0,
+data:             "accepted_prediction_tokens": 0,
+data:             "rejected_prediction_tokens": 0
+data:           }
+data:         }
+data:       },
+data:       "tool_call_chunks": [
+data:         {
+data:           "name": "google_calendar_view",
+data:           "args": "{\"input\":\"list all events for this month\"}",
+data:           "id": "call_3h1ZMZa9ZxB4qASRemMlmy4c",
+data:           "index": 0,
+data:           "type": "tool_call_chunk"
+data:         }
+data:       ],
+data:       "id": "chatcmpl-CA6OlzXhsfIfiMOHKvQH3IUkZirp2",
+data:       "usage_metadata": {
+data:         "input_tokens": 216,
+data:         "output_tokens": 20,
+data:         "total_tokens": 236,
+data:         "input_token_details": {
+data:           "audio": 0,
+data:           "cache_read": 0
+data:         },
+data:         "output_token_details": {
+data:           "audio": 0,
+data:           "reasoning": 0
+data:         }
+data:       },
+data:       "tool_calls": [
+data:         {
+data:           "name": "google_calendar_view",
+data:           "args": {
+data:             "input": "list all events for this month"
+data:           },
+data:           "id": "call_3h1ZMZa9ZxB4qASRemMlmy4c",
+data:           "type": "tool_call"
+data:         }
+data:       ],
+data:       "invalid_tool_calls": [],
+data:       "type": "ai"
+data:     }
+data:   ]
+data: }
+
+event: values
+data: {
+data:   "messages": [
+data:     {
+data:       "content": "You are authenticated as google-oauth2|102728881944301552222 via Auth0. The user has the following scopes: openid profile email.",
+data:       "additional_kwargs": {},
+data:       "response_metadata": {},
+data:       "id": "d8695aba-66b1-495a-99f2-308e92606682",
+data:       "type": "system"
+data:     },
+data:     {
+data:       "content": "Hello, can you list my events this month?",
+data:       "additional_kwargs": {},
+data:       "response_metadata": {},
+data:       "id": "1338529e-4d85-4b31-9475-2757ab75120e",
+data:       "type": "human"
+data:     },
+data:     {
+data:       "content": "",
+data:       "additional_kwargs": {
+data:         "tool_calls": [
+data:           {
+data:             "index": 0,
+data:             "id": "call_3h1ZMZa9ZxB4qASRemMlmy4c",
+data:             "type": "function",
+data:             "function": {
+data:               "name": "google_calendar_view",
+data:               "arguments": "{\"input\":\"list all events for this month\"}"
+data:             }
+data:           }
+data:         ]
+data:       },
+data:       "response_metadata": {
+data:         "usage": {
+data:           "prompt_tokens": 216,
+data:           "completion_tokens": 20,
+data:           "total_tokens": 236,
+data:           "prompt_tokens_details": {
+data:             "cached_tokens": 0,
+data:             "audio_tokens": 0
+data:           },
+data:           "completion_tokens_details": {
+data:             "reasoning_tokens": 0,
+data:             "audio_tokens": 0,
+data:             "accepted_prediction_tokens": 0,
+data:             "rejected_prediction_tokens": 0
+data:           }
+data:         }
+data:       },
+data:       "tool_call_chunks": [
+data:         {
+data:           "name": "google_calendar_view",
+data:           "args": "{\"input\":\"list all events for this month\"}",
+data:           "id": "call_3h1ZMZa9ZxB4qASRemMlmy4c",
+data:           "index": 0,
+data:           "type": "tool_call_chunk"
+data:         }
+data:       ],
+data:       "id": "chatcmpl-CA6OlzXhsfIfiMOHKvQH3IUkZirp2",
+data:       "usage_metadata": {
+data:         "input_tokens": 216,
+data:         "output_tokens": 20,
+data:         "total_tokens": 236,
+data:         "input_token_details": {
+data:           "audio": 0,
+data:           "cache_read": 0
+data:         },
+data:         "output_token_details": {
+data:           "audio": 0,
+data:           "reasoning": 0
+data:         }
+data:       },
+data:       "tool_calls": [
+data:         {
+data:           "name": "google_calendar_view",
+data:           "args": {
+data:             "input": "list all events for this month"
+data:           },
+data:           "id": "call_3h1ZMZa9ZxB4qASRemMlmy4c",
+data:           "type": "tool_call"
+data:         }
+data:       ],
+data:       "invalid_tool_calls": [],
+data:       "type": "ai"
+data:     },
+data:     {
+data:       "status": "success",
+data:       "content": "Result for the prompt \"list all events for this month\": \n[\n  {\n    \"status\": \"confirmed\",\n \"summary\": \"Demo Day\",\n    \"description\": \"Demo day across all teams collaborating to show WIP work.\\n\ ... }",
+data:       "tool_call_id": "call_3h1ZMZa9ZxB4qASRemMlmy4c",
+data:       "name": "google_calendar_view",
+data:       "metadata": {},
+data:       "additional_kwargs": {},
+data:       "response_metadata": {},
+data:       "id": "cbee5864-9331-4c96-a3b2-d36047fed329",
+data:       "type": "tool"
+data:     }
+data:   ]
+data: }
+```
+
 ## Notes
 
 Currently in order for Studio to draw conditional edges properly, you will need to add a third parameter that manually lists the possible nodes the edge can route between. Here's an example:
