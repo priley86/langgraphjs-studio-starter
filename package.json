@@ -1,17 +1,23 @@
 {
   "name": "langgraphjs-studio-starter",
-  "packageManager": "yarn@1.22.22",
+  "packageManager": "npm@10.9.2",
+  "scripts": {
+    "langgraph:start": "npx @langchain/langgraph-cli up",
+    "langgraph:dev": "npx @langchain/langgraph-cli dev --port 54367"
+  },
   "dependencies": {
+    "@auth0/ai-langchain": "file:auth0-ai-langchain-0.0.0.tgz",
     "@langchain/community": "^0.3.3",
-    "@langchain/core": "^0.3.3",
-    "@langchain/langgraph": "^0.2.8",
-    "@langchain/openai": "^0.3.2",
-    "langsmith": "^0.1.55",
-    "zod": "^3.23.8",
-    "zod-to-json-schema": "^3.23.2"
+    "@langchain/core": "^0.3.72",
+    "@langchain/langgraph": "^0.4.6",
+    "@langchain/langgraph-sdk": "^0.0.107",
+    "@langchain/openai": "^0.3.14",
+    "date-fns": "^4.1.0",
+    "gaxios": "^6.7.1",
+    "googleapis": "^150.0.1"
   },
   "devDependencies": {
-    "@tsconfig/recommended": "^1.0.7",
+    "@tsconfig/recommended": "^1.0.10",
     "typescript": "^5.5.4"
   }
 }

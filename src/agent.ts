@@ -1,80 +1,106 @@
-import type { AIMessage } from "@langchain/core/messages";
-import { TavilySearchResults } from "@langchain/community/tools/tavily_search";
+import { AIMessage, SystemMessage } from "@langchain/core/messages";
+import { RunnableLike } from "@langchain/core/runnables";
+import {
+  END,
+  InMemoryStore,
+  MemorySaver,
+  MessagesAnnotation,
+  START,
+  StateGraph,
+} from "@langchain/langgraph";
+import { ToolNode } from "@langchain/langgraph/prebuilt";
 import { ChatOpenAI } from "@langchain/openai";
 
-import { MessagesAnnotation, StateGraph } from "@langchain/langgraph";
-import { ToolNode } from "@langchain/langgraph/prebuilt";
+import { calendarCommunityTool } from "./tools/calendar-view-tool";
+import { checkUsersCalendar } from "./tools/check-user-calendar";
 
-const tools = [
-  new TavilySearchResults({ maxResults: 3, }),
-];
+const model = new ChatOpenAI({
+  model: "gpt-4o",
+}).bindTools([checkUsersCalendar, calendarCommunityTool]);
 
-// Define the function that calls the model
-async function callModel(
+// Example of how to access authenticated user context in a node
+// The auth handler returns user data that can be accessed via config.configurable.auth
+const callLLM = async (
   state: typeof MessagesAnnotation.State,
-) {
-  /**
-   * Call the LLM powering our agent.
-   * Feel free to customize the prompt, model, and other logic!
-   */
-  const model = new ChatOpenAI({
-    model: "gpt-4o",
-  }).bindTools(tools);
-
-  const response = await model.invoke([
-    {
-      role: "system",
-      content: `You are a helpful assistant. The current date is ${new Date().getTime()}.`
-    },
-    ...state.messages
-  ]);
-
-  // MessagesAnnotation supports returning a single message or array of messages
-  return { messages: response };
-}
-
-// Define the function that determines whether to continue or not
-function routeModelOutput(state: typeof MessagesAnnotation.State) {
-  const messages = state.messages;
-  const lastMessage: AIMessage = messages[messages.length - 1];
-  // If the LLM is invoking tools, route there.
-  if ((lastMessage?.tool_calls?.length ?? 0) > 0) {
-    return "tools";
+  config?: any
+) => {
+  // Ensure messages array exists
+  if (!state.messages) {
+    console.log("⚠️ No messages in state, initializing empty array");
+    state.messages = [];
   }
-  // Otherwise end the graph.
-  return "__end__";
-}
 
-// Define a new graph.
-// See https://langchain-ai.github.io/langgraphjs/how-tos/define-state/#getting-started for
-// more on defining custom graph states.
-const workflow = new StateGraph(MessagesAnnotation)
-  // Define the two nodes we will cycle between
-  .addNode("callModel", callModel)
-  .addNode("tools", new ToolNode(tools))
-  // Set the entrypoint as `callModel`
-  // This means that this node is the first one called
-  .addEdge("__start__", "callModel")
-  .addConditionalEdges(
-    // First, we define the edges' source node. We use `callModel`.
-    // This means these are the edges taken after the `callModel` node is called.
-    "callModel",
-    // Next, we pass in the function that will determine the sink node(s), which
-    // will be called after the source node is called.
-    routeModelOutput,
-    // List of the possible destinations the conditional edge can route to.
-    // Required for conditional edges to properly render the graph in Studio
-    [
-      "tools",
-      "__end__"
-    ],
+  // Access authenticated user data from the standard LangGraph location
+  const authenticatedUser = config?.configurable?.langgraph_auth_user;
+  if (authenticatedUser) {
+    console.log("👤 Authenticated user found:", authenticatedUser);
+
+    // Add user context to the system message if not already present
+    const hasSystemMessage = state.messages.some(
+      (msg) => msg._getType() === "system"
+    );
+    if (!hasSystemMessage) {
+      const userContext = `You are authenticated as ${authenticatedUser.sub} via Auth0.`;
+
+      // Add a system message with user context
+      const systemMessage = new SystemMessage(
+        `${userContext} The user has the following scopes: ${
+          authenticatedUser.scope || "none"
+        }.`
+      );
+      state.messages.unshift(systemMessage);
+    }
+  } else {
+    console.log(
+      "❌ No authenticated user found in config.configurable.langgraph_auth_user"
+    );
+  }
+
+  const response = await model.invoke(state.messages);
+  return { messages: [response] };
+};
+
+const routeAfterLLM: RunnableLike = function (state) {
+  // Ensure messages array exists and has content
+  if (!state.messages || state.messages.length === 0) {
+    return END;
+  }
+
+  const lastMessage = state.messages[state.messages.length - 1] as AIMessage;
+  if (!lastMessage.tool_calls?.length) {
+    return END;
+  }
+  return "tools";
+};
+
+const stateGraph = new StateGraph(MessagesAnnotation)
+  .addNode("callLLM", callLLM)
+  .addNode(
+    "tools",
+    new ToolNode(
+      [
+        // A tool with federated connection access
+        checkUsersCalendar,
+        // A community tool with federated connection access
+        calendarCommunityTool,
+      ],
+      {
+        // Error handler should be disabled in order to
+        // trigger interruptions from within tools.
+        handleToolErrors: false,
+      }
+    )
   )
-  // This means that after `tools` is called, `callModel` node is called next.
-  .addEdge("tools", "callModel");
+  .addEdge(START, "callLLM")
+  .addConditionalEdges("callLLM", routeAfterLLM, [END, "tools"])
+  .addEdge("tools", "callLLM");
 
-// Finally, we compile it!
-// This compiles it into a graph you can invoke and deploy.
-export const graph = workflow.compile({
-  // if you want to update the state before calling the tools
-  // interruptBefore: [],
+const checkpointer = new MemorySaver();
+const store = new InMemoryStore();
+
+export const graph = stateGraph.compile({
+  checkpointer,
+  store,
+  interruptBefore: [],
+  interruptAfter: [],
 });

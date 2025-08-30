@@ -1,4 +1,4 @@
-# LangGraph Studio TypeScript Starter (Beta)
+# LangGraph Studio TypeScript Starter with Auth0
 
 This is a sample project that will help you get started with developing [LangGraph.js](https://github.com/langchain-ai/langgraphjs) projects in [LangGraph Studio](https://github.com/langchain-ai/langgraph-studio) and deploying them to [LangGraph Cloud](https://langchain-ai.github.io/langgraph/cloud/deployment/setup_javascript/).
 
@@ -8,10 +8,10 @@ It contains a simple example graph exported from `src/agent.ts` that implements 
 
 ## Getting Started
 
-This demo requires an [OpenAI API key](https://openai.com/) and a [Tavily API key](https://tavily.com/) for search results.
+This demo requires an [OpenAI API key](https://openai.com/).
 
 1. Clone this repository. (git clone https://github.com/langchain-ai/langgraphjs-studio-starter.git)
-2. Rename the existing `.env.example` file `.env` and fill in your `OPENAI_API_KEY` and `TAVILY_API_KEY`.
+2. Rename the existing `.env.example` file `.env.local` and fill in your `OPENAI_API_KEY` and related Auth0 keys.
 3. Download the latest release of LangGraph Studio [from here](https://github.com/langchain-ai/langgraph-studio/releases).
 4. Log in/sign up for [LangSmith](https://smith.langchain.com/) if you haven't already.
 5. Ensure Docker is running. You can [download Docker here](https://www.docker.com/) and install it if you don't have it already.
@@ -43,10 +43,10 @@ A sample pattern might look like this:
 1. HumanMessage - initial user input
 2. AIMessage with .tool_calls - agent picking tool(s) to use to collect information
 3. ToolMessage(s) - the responses (or errors) from the executed tools
-    (... repeat steps 2 and 3 as needed ...)
+   (... repeat steps 2 and 3 as needed ...)
 4. AIMessage without .tool_calls - agent responding in unstructured format to the user.
 5. HumanMessage - user responds with the next conversational turn.
-    (... repeat steps 2-5 as needed ... )
+   (... repeat steps 2-5 as needed ... )
 
 The graph's state will merge lists of messages or returned single messages, updating existing messages by ID.
 
@@ -89,4 +89,3 @@ You can swap in other models if you'd like by using [the appropriate LangChain.j
 ## Thank you!
 
 LangGraph.js support in Studio is currently in beta, so if you have questions or feedback, please let us know. Connect with us on X [@LangChainAI](https://x.com/langchainai).
-
